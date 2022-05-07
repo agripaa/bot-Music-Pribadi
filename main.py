@@ -1,13 +1,15 @@
 import discord
 from discord.ext import commands
-import music
+from music import Player
 
-cogs = [music]
+itents = discord.Itents.default()
+itents.members = True
 
-client = commands.Bot(command_prefix='!', itents = discord.Itents.all())
+bot = commands.Bot(command_prefix="!", itents=itents)
 
-for i in range(len(cogs)):
-    cogs[i].setup(client)
-
-
-client.run('OTcyMTMzNTgyMTA3NzA5NDYw.GB68L5.3AZ1z9DNltREeVtVwlX1tFP4vtwD4dixYlxEJw')
+@bot.event
+async def on_ready():
+  print(f"{bot.user.name} siap beraksi")
+  
+bot.add_cog(Player(bot))
+bot.run('OTcyMTMzNTgyMTA3NzA5NDYw.GB68L5.3AZ1z9DNltREeVtVwlX1tFP4vtwD4dixYlxEJw')
