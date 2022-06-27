@@ -6,47 +6,48 @@ import urllib.parse
 import urllib.request
 import re
 import youtube_dl
-from youtube_dl import YoutubeDL
 import aiohttp
 
 Queue = {}
-LYRICS_URL = "https://some-random-api.ml/lyrics?title="
 
 
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.YDL_OPTIONS = {'format': "bestaudio"}
 
-    def search_song(self, item):
-        with YoutubeDL(self.YDL_OPTIONS) as ydl:
-            try:
-                info = ydl.extract_info("ytsearch:%s" %
-                                        item, download=False)['entries'][0]
-            except Exception:
-                return False
-        return {'source': info['formats'][0]['url'], 'title': info['title']}
+    @commands.command()
+    async def stop(self, ctx):
+        if ctx.author.voice:
+            if ctx.voice_client:
+                voice = ctx.guild.voice_client
+                for i in range(len(Queue[ctx.guild.id]) - 1):
+                    del(Queue[ctx.guild.id][i])
+                voice.stop()
+                await ctx.send("Semua music dah di stop dan di hapus di list (queue")
+            else:
+                await ctx.send("Lah gw aja gak ada di voice anj!")
+        else:
+            await ctx.send("Lu gak ada di voice anjing.")
 
     @commands.command()
     async def join(self, ctx):
-        # ctx.message.author.voice.channel
         if ctx.author.voice:
             channel = ctx.message.author.voice.channel
             await channel.connect()
-            await ctx.send("Oteweee masuk Room Ngaff")
+            await ctx.send("Otw Masuk ngaff")
         else:
-            await ctx.send("LU KALAU MAU MASUKIN GW LU HARUS ADA DI DALAM ROOM SAT! TAU ETIKA LAH.")
+            await ctx.send("Lu gak ada di voice anjing.")
 
     @commands.command()
     async def leave(self, ctx):
         if ctx.author.voice:
             if ctx.voice_client:
-                await ctx.send("bye bitch")
+                await ctx.send("Bye bitch")
                 await ctx.guild.voice_client.disconnect()
             else:
-                await ctx.send("daah gw keluar!")
+                await ctx.send("Lah gw gak ada di voice anj!")
         else:
-            await ctx.send("Aneh lu, gw gak dalam voice tapi mau masuk.")
+            await ctx.send("Lu gak ada di voice anjing.")
 
     @commands.command(pass_context=True)
     async def pause(self, ctx):
@@ -57,12 +58,12 @@ class Music(commands.Cog):
                 await ctx.send("**Selection paused.**")
                 await sleep(500)
                 if ctx.voice_client and ctx.guild.voice_client.is_paused():
-                    await ctx.send("Paused is too long!")
-                    ctx.guild.voice_client.disconnect()
+                    await ctx.send("Music sudah terpause")
+                    await ctx.guild.voice_client.disconnect()
             else:
-                await ctx.send("There is no music to pause!")
+                await ctx.send("Musiknya tidak bisa di pause!")
         else:
-            await ctx.send("You are not in a voice channel, you must be in a voice channel to run this command.")
+            await ctx.send("Lu gak ada di voice anjing.")
 
     @commands.command(pass_context=True)
     async def resume(self, ctx):
@@ -74,7 +75,7 @@ class Music(commands.Cog):
             else:
                 await ctx.send("There is no song to resume!")
         else:
-            await ctx.send("You are not in a voice channel, you must be in a voice channel to run this command.")
+            await ctx.send("Lu gak ada di voice anjing.")
 
     @commands.command()
     async def queue(self, ctx, page_num=1):
@@ -103,11 +104,11 @@ class Music(commands.Cog):
         for j in range(len(queue_pages[real_num])):
             if page_num == 1:
                 if j == 0:
-                    embed.add_field(name="[0] is Playing:", value=queue_pages[real_num][j].get(
+                    embed.add_field(name="Lagu yang sedang diputar:", value=queue_pages[real_num][j].get(
                         'title', None), inline=False)
                 else:
                     embed.add_field(name=str(
-                        j) + ". ", value=queue_pages[real_num][j].get('title', None), inline=False)
+                        j+1, "Lagu selanjutnya borrr") + ". ", value=queue_pages[real_num][j].get('title', None), inline=False)
             else:
                 embed.add_field(name=str(
                     key) + str(j) + ". ", value=queue_pages[real_num][j].get('title', None), inline=False)
@@ -115,6 +116,37 @@ class Music(commands.Cog):
         embed.set_footer(text="Page " + str(page_num) +
                          "/" + str(len(queue_pages)))
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def skip(self, ctx, index=0):
+        if ctx.author.voice:
+            voice = ctx.guild.voice_client
+            if index > len(Queue[ctx.guild.id]):
+                await ctx.send("Music tidak bisa di skip!")
+            if len(Queue[ctx.guild.id]) == 0:
+                await ctx.send("Musik tidak bisa di skip : Minimal ada 2 music di list!")
+            else:
+                msg = await ctx.send("Minimal 3 orang harus setuju untuk di skip, diberiwaktu 10 detik..")
+                await msg.add_reaction("☑️")
+
+                await sleep(10)
+
+                fetch = await ctx.channel.fetch_message(msg.id)
+                reaction = await fetch.reactions[0].users().flatten()
+                # remove bot from reaction, so bot will not be detected as user
+                reaction.pop(reaction.index(ctx.guild.me))
+
+                if len(reaction) == 0:
+                    await ctx.send("Gak ada yang mau nih?, Yda musiknya gak gw skip.")
+                if len(reaction) == 2:
+                    await ctx.send("Apaan cuman 2 orang, Yda musiknya gak gw skip.")
+                if len(reaction) >= 3:
+                    for i in range(index - 1):
+                        del(Queue[ctx.guild.id][index])
+                    voice.stop()
+                    await ctx.send("Musik dah gw skip anj!")
+        else:
+            await ctx.send("Lu gak ada di voice anjing.")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -181,97 +213,34 @@ class Music(commands.Cog):
             Queue[ctx.guild.id].append(
                 {'url': info['formats'][0]['url'], 'title': info['title'], 'from_playlist': False})
 
-            await ctx.send(f'Lagu yang Luwh masuk udah gw puterin\nLagu yang lu req ada : **{len(Queue[ctx.guild.id])}**')
+            if len(Queue[ctx.guild.id]) == 1:
+                await ctx.send(f'Sekarang kita play ***{Queue[ctx.guild.id][0]["title"]}***\nMusik kita masukkan ke list')
+            if len(Queue[ctx.guild.id]) >= 2:
+                await ctx.send(f"Musik sudah dimaqsukkan ke list! : [***{Queue[ctx.guild.id][len(Queue[ctx.guild.id])]['title']}***]")
 
             if not (voice.is_playing() or voice.is_paused()):
                 await self.bot.get_command(name='automatic_play').callback(self, ctx)
         else:
-            await ctx.send("Luwh kaga ada di dalam room bangsat!")
+            await ctx.send("Lu gak ada di voice anjing.")
 
     @commands.command()
-    async def lyric(self, ctx, song):
-        if (ctx.author.voice):
-            if ctx.voice_client:
-                if song == None:
-                    name = Queue[ctx.guild.id][0].get('title', None)
-                    async with ctx.typing():
-                        async with aiohttp.request("GET", LYRICS_URL + name, headers={}) as r:
-                            if not 200 <= r.status <= 299:
-                                await ctx.send(f"No lyrics found with this --> **Title** [***{name}***]")
-
-                            data = await r.json()
-
-                            embed = discord.Embed(
-                                title=data["title"],
-                                description=data["lyrics"],
-                                colour=0xa09c9c,
-                            )
-
-                            embed.set_thumbnail(
-                                url=data["thumbnail"]["genius"])
-                            embed.set_author(name=data["author"])
-                            embed.set_footer(text="Lyric music")
-                            await ctx.send(embed=embed)
-                else:
-                    async with ctx.typing():
-                        async with aiohttp.request("GET", LYRICS_URL + song, headers={}) as r:
-                            if not 200 <= r.status <= 299:
-                                await ctx.send(f"No lyrics found with this --> **Title** [***{song}***]")
-
-                            data = await r.json()
-
-                            embed = discord.Embed(
-                                title=data["title"],
-                                description=data["lyrics"],
-                                colour=0xa09c9c,
-                            )
-
-                            embed.set_thumbnail(
-                                url=data["thumbnail"]["genius"])
-                            embed.set_author(name=data["author"])
-                            embed.set_footer(text="Lyric music")
-                            await ctx.send(embed=embed)
-            else:
-                return await ctx.send("I am not connected to a voice channel.")
-        else:
-            return await ctx.send("You are not in a voice channel, you must be in a voice channel to run this command.")
-
-    @commands.command()
-    async def skip(self, ctx, index=0):
+    async def lyric(self, ctx):
         if ctx.author.voice:
-            voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-            if index > 0:
-                if index > len(Queue[ctx.guild.id]):
-                    await ctx.send("Sabar Cuy gak bisa Skip music")
-                else:
-                    for i in range(index - 1):
-                        del(Queue[ctx.guild.id][0])
-            voice.stop()
-            await ctx.send("Music lu dah gw skip anj!")
+            sng = Queue[ctx.guild.id][0]["title"].split('-')
+            async with aiohttp.request("GET", f"https://api.lyrics.ovh/v1/{sng[0]}/{sng[1]}", headers={}) as r:
+                if r.status != 200:
+                    await ctx.send(f"No lyrics found with this --> **Title** [***{sng[1]}***]")
+                data = await r.json()
+                embed = discord.Embed(
+                    title=sng[1],
+                    description=data["lyrics"],
+                    colour=0xa09c9c,
+                )
+                embed.set_author(name=sng[0])
+                embed.set_footer(text="Lyric music")
+                await ctx.send(embed=embed)
         else:
-            await ctx.send("Luwh gak ada di dalam voice ngaf, ngapain skip anj!")
-
-    @commands.command()
-    async def leave(self, ctx):
-        if ctx.voice_client is not None:
-            return await ctx.voice_client.disconnect()
-        await ctx.send("Bye Bitch!")
-
-    @commands.command()
-    async def search(self, ctx, *, song=None):
-        if song is None:
-            return await ctx.send("masukin lagunya jangan lupa nyet!")
-        await ctx.send("bentar gw lagi cari dlu lagunya yang lu maksud")
-        info = await self.search_song(10, song)
-        embed = discord.Embed(
-            title=f"hasil lagu yang lu cari : '{song}':", description="*lu bisa gunain link untuk req kalau misalkan lagu yang lu maksud gak sesuai keinginan lu. *\n", colour=discord.Colour.red())
-        amount = 0
-        for entry in info["entries"]:
-            embed.description += f'{entry["title"]}({entry["webpage_url"]})\n'
-            amount += 1
-        embed.set_footer(
-            text=f"menampilkan lagu yang lu maksud {amount}")
-        await ctx.send(embed=embed)
+            return await ctx.send("Lu gak ada di voice anjing.")
 
 
 def setup(bot):
