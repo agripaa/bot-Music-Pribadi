@@ -29,11 +29,24 @@ class Music(commands.Cog):
 
     @commands.command()
     async def join(self, ctx):
-        if ctx.author.voice is None:
-            return await ctx.send("Luwh harus gabung voice dlu dong nyet!")
-        if ctx.author.voice is not None:
-            await ctx.voice_client.disconnect()
-        await ctx.author.voice.channel.connect()
+        # ctx.message.author.voice.channel
+        if ctx.author.voice:
+            channel = ctx.message.author.voice.channel
+            await channel.connect()
+            await ctx.send("Oteweee masuk Room Ngaff")
+        else:
+            await ctx.send("LU KALAU MAU MASUKIN GW LU HARUS ADA DI DALAM ROOM SAT! TAU ETIKA LAH.")
+
+    @commands.command()
+    async def leave(self, ctx):
+        if ctx.author.voice:
+            if ctx.voice_client:
+                await ctx.send("bye bitch")
+                await ctx.guild.voice_client.disconnect()
+            else:
+                await ctx.send("daah gw keluar!")
+        else:
+            await ctx.send("Aneh lu, gw gak dalam voice tapi mau masuk.")
 
     @commands.command(pass_context=True)
     async def pause(self, ctx):
@@ -173,7 +186,7 @@ class Music(commands.Cog):
             if not (voice.is_playing() or voice.is_paused()):
                 await self.bot.get_command(name='automatic_play').callback(self, ctx)
         else:
-            await ctx.send("You are not in a voice channel, you must be in a voice channel to run this command.")
+            await ctx.send("Luwh kaga ada di dalam room bangsat!")
 
     @commands.command()
     async def lyric(self, ctx, song):

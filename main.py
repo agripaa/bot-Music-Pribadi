@@ -9,9 +9,8 @@ bot.remove_command("help")
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(status=discord.Status.dnd, activity=discord.Game("Istri Anijme Sah agripa 😅"))
+    await bot.change_presence(status=discord.Status.dnd, activity=discord.Game("Maintenance"))
     print("We have logged in as {0.user}\nHappy dugem. [HALAL!]".format(bot))
-#     bot.load_extension('Generalcommand')
     bot.load_extension('Musiccommand')
 
 
@@ -54,8 +53,9 @@ async def help(ctx):
     embed = discord.Embed(title="***Help***", color=0xa09c9c)
 #     embed.add_field(name = "General", value = "ping | purge", inline=False)
     embed.add_field(
-        name="Music", value="lyric | play | queue | pause | resume", inline=False)
-    embed.set_footer(text="Help Menu")
+        name="Music", value="!lyric | !play | !skip | !queue | !pause | !resume", inline=False)
+    embed.set_footer(
+        text="***Luwh bisa pake List yang udah disiapin developer, developer bot ini: @Jounny & @iFanpSGTS (Github Account)***")
     await ctx.send(embed=embed)
 
-bot.run("TOKEN")
+bot.run("OTcyMTMzNTgyMTA3NzA5NDYw.GQdzNi.qVSPKRd_qEM9ZEFEsRgajwBjsoSRAFvlgkzmTI")

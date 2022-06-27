@@ -3,17 +3,18 @@
 
 # Commands
 ```bash
-> play
-> pause
-> resume
-> lyrics
-> queue
+! play
+! skip
+! pause
+! resume
+! lyrics
+! queue
 ```
 
 # Credit
 ```bash
 > Jounny (https://github.com/Jounnyy)
-> iFanpS
+> iFanpS 
 > FyeTopia
 > Jefri
 ```
